@@ -5,7 +5,10 @@ import PropTypes from 'prop-types';
 const Modal = ({ isModalOpen, alt, image }) => {
   useEffect(() => {
     document.addEventListener('keydown', escapePress);
-  }, []);
+    return () => {
+      document.removeEventListener('keydown', escapePress);
+    };
+  });
 
   const escapePress = (e) => {
     if (e.key === 'Escape') {
@@ -15,7 +18,6 @@ const Modal = ({ isModalOpen, alt, image }) => {
 
   const modalClose = (e) => {
     isModalOpen(e);
-    document.removeEventListener('keydown', escapePress);
   };
 
   return (
