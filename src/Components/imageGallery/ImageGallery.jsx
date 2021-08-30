@@ -1,88 +1,74 @@
 import ImagesGalleryItem from './imageGalleryItem/ImagesGalleryItem';
 import { ApiGetData } from '../api/ApiGetData';
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ImagesGalleryStyled } from './ImagesGalleryStyled';
 import Searchbar from '../searchbar/Searchbar';
 import Button from '../button/Button';
 
-class ImageGallery extends Component {
-  state = {
-    data: [],
-    search: '',
-    page: 1,
-    spinner: true,
-    imagesLoaded: 0,
-    imagesPerPage: 15,
-  };
+const ImageGallery = () => {
+  const [data, setData] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
+  const [page, setPage] = useState(1);
+  const [spinner, setSpinner] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(0);
+  const [imagesPerPage] = useState(15);
 
-  componentDidMount() {
-    if (this.state.search === '') return false;
-    this.search(this.state.page, this.state.imagesPerPage);
-  }
+  useEffect(() => {
+    if (searchInput === '') return false;
+    search(page, imagesPerPage);
+    setData([]);
+    imageSetToZero();
+  }, [searchInput]);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.imagesLoaded !== this.state.imagesLoaded) {
-      if (this.state.imagesLoaded === this.state.imagesPerPage) {
-        window.scrollTo({
-          top: document.documentElement.scrollHeight,
-          behavior: 'smooth',
-        });
-        this.setState({ spinner: false, imageOnLoad: 0 });
-      }
+  useEffect(() => {
+    if (page !== 1) {
+      search(page, imagesPerPage);
+      imageSetToZero();
     }
-    if (prevState.page !== this.state.page && this.state.page !== 1) {
-      this.search(this.state.page, this.state.imagesPerPage);
-      this.setState({ imagesLoaded: 0, spinner: true });
-    }
-    if (prevState.search !== this.state.search) {
-      this.setState({ data: [], page: 1 }, () => {
-        this.search(this.state.page, this.state.imagesPerPage);
+  }, [page]);
+
+  useEffect(() => {
+    if (imagesLoaded === imagesPerPage) {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth',
       });
+      imageSetToZero();
     }
-  }
+  }, [imagesLoaded]);
 
-  search(page, imagesPerPage) {
-    ApiGetData(this.state.search, page, imagesPerPage).then((data) => {
-      data.map((item) =>
-        this.setState((prev) => ({ data: [...prev.data, item] }))
-      );
+  const imageSetToZero = () => {
+    setSpinner((prev) => !prev);
+    setImagesLoaded(0);
+  };
+
+  const search = (page, imagesPerPage) => {
+    ApiGetData(searchInput, page, imagesPerPage).then((data) => {
+      data.map((item) => setData((prev) => [...prev, item]));
     });
-  }
-
-  imageOnLoad = () => {
-    this.setState((prev) => ({ imagesLoaded: prev.imagesLoaded + 1 }));
   };
 
-  setSearch = (value) => {
-    this.setState({ search: value });
-  };
-
-  setPage = () => {
-    this.setState((prev) => ({ page: prev.page + 1 }));
-  };
-
-  render() {
-    return (
-      <>
-        <Searchbar setSearch={this.setSearch} />
-        <ImagesGalleryStyled>
-          {this.state.data.map((item) => (
-            <ImagesGalleryItem
-              key={item.id}
-              item={item}
-              imageOnLoad={this.imageOnLoad}
-            />
-          ))}
-        </ImagesGalleryStyled>
-        {this.state.data.length !== 0 &&
-        this.state.data.length % this.state.imagesPerPage === 0 ? (
-          <Button setPage={this.setPage} spinner={this.state.spinner} />
-        ) : (
-          <h2 className="notification">Notification</h2>
-        )}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <Searchbar setSearch={(value) => setSearchInput(value)} />
+      <ImagesGalleryStyled>
+        {data.map((item) => (
+          <ImagesGalleryItem
+            key={item.id}
+            item={item}
+            imageOnLoad={() => {
+              setImagesLoaded((prev) => prev + 1);
+            }}
+          />
+        ))}
+      </ImagesGalleryStyled>
+      {data.length !== 0 && data.length % imagesPerPage === 0 ? (
+        <Button setPage={() => setPage((prev) => prev + 1)} spinner={spinner} />
+      ) : (
+        <h2 className="notification">Notification</h2>
+      )}
+    </>
+  );
+};
 
 export default ImageGallery;

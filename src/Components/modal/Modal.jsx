@@ -1,32 +1,31 @@
-import React, { Component } from 'react';
+import { useEffect } from 'react';
 import { ModalStyled } from './ModalStyled';
 import PropTypes from 'prop-types';
 
-class Modal extends Component {
-  componentDidMount() {
-    document.addEventListener('keydown', this.escapePress);
-  }
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.escapePress);
-  }
-  escapePress = (e) => {
+const Modal = ({ isModalOpen, alt, image }) => {
+  useEffect(() => {
+    document.addEventListener('keydown', escapePress);
+  }, []);
+
+  const escapePress = (e) => {
     if (e.key === 'Escape') {
-      this.props.isModalOpen(e);
+      modalClose(e);
     }
   };
-  render() {
-    return (
-      <ModalStyled
-        onClick={this.props.isModalOpen}
-        onKeyPress={this.escapePress}
-      >
-        <div className="Modal">
-          <img src={this.props.image} alt={this.props.alt} />
-        </div>
-      </ModalStyled>
-    );
-  }
-}
+
+  const modalClose = (e) => {
+    isModalOpen(e);
+    document.removeEventListener('keydown', escapePress);
+  };
+
+  return (
+    <ModalStyled onClick={modalClose} onKeyPress={escapePress}>
+      <div className="Modal">
+        <img src={image} alt={alt} />
+      </div>
+    </ModalStyled>
+  );
+};
 
 export default Modal;
 
